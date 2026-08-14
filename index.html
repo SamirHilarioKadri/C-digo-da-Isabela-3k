@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Dados Agro Paraná</title>
+  <title>PAM Paraná - IBGE</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #fafafa; }
@@ -15,4 +15,65 @@
 <body>
   <h1>Consulta SIDRA/IBGE - Produção Agrícola no Paraná</h1>
   <div id="output">Carregando dados...</div>
-  <canvas id="grafico">
+  <canvas id="grafico"></canvas>
+
+  <script>
+    async function buscarDadosAgroParana() {
+      const url = "https://servicodados.ibge.gov.br/api/v3/agregados/1612/periodos/2023/variaveis/214?localidades=N3[41]";
+      try {
+        const response = await fetch(url);
+        const dados = await response.json();
+
+        const resultados = dados[0]?.resultados[0]?.series || [];
+        if (!resultados.length) {
+          document.getElementById("output").innerText = "Nenhum resultado encontrado.";
+          return;
+        }
+
+        // Monta tabela
+        let html = "<table><tr><th>Estado</th><th>Ano</th><th>Valor Produção (R$ mil)</th></tr>";
+        let anos = [];
+        let valores = [];
+
+        resultados.forEach(item => {
+          const estado = item.localidade?.nome || "Desconhecido";
+          for (const [ano, valor] of Object.entries(item.serie)) {
+            html += `<tr><td>${estado}</td><td>${ano}</td><td>${valor}</td></tr>`;
+            anos.push(ano);
+            valores.push(valor);
+          }
+        });
+        html += "</table>";
+        document.getElementById("output").innerHTML = html;
+
+        // Cria gráfico
+        const ctx = document.getElementById("grafico").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: anos,
+            datasets: [{
+              label: "Valor da Produção (R$ mil)",
+              data: valores,
+              backgroundColor: "rgba(75, 192, 192, 0.6)"
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Produção Agrícola no Paraná - IBGE"
+              }
+            }
+          }
+        });
+      } catch (err) {
+        document.getElementById("output").innerText = "Erro ao consultar API: " + err;
+      }
+    }
+
+    buscarDadosAgroParana();
+  </script>
+</body>
+</html>
