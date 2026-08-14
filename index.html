@@ -1,28 +1,51 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Dados Agro Paraná</title>
-    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
-    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <meta charset="UTF-8">
+  <title>Dados Agro Paraná</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #fafafa; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #eee; }
+  </style>
 </head>
 <body>
-    <h1>Consulta SIDRA/IBGE - Produção Agrícola no Paraná</h1>
+  <h1>Consulta SIDRA/IBGE - Produção Agrícola no Paraná</h1>
+  <div id="output">Carregando dados...</div>
 
-    <py-script>
-import requests
-import pandas as pd
+  <script>
+    async function buscarDadosAgroParana() {
+      const url = "https://servicodados.ibge.gov.br/api/v3/agregados/1612/periodos/2023/variaveis/214?localidades=N3[41]";
+      try {
+        const response = await fetch(url, {
+          headers: { "User-Agent": "AcessibilidadeAgroApp/1.0 (contato@exemplo.com)" }
+        });
+        const dados = await response.json();
 
-def buscar_dados_agro_parana():
-    url = "https://servicodados.ibge.gov.br/api/v3/agregados/1612/periodos/2023/variaveis/214?localidades=N3[41]"
-    headers = {"User-Agent": "AcessibilidadeAgroApp/1.0 (contato@exemplo.com)"}
+        const resultados = dados[0]?.resultados[0]?.series || [];
+        if (!resultados.length) {
+          document.getElementById("output").innerText = "Nenhum resultado encontrado.";
+          return;
+        }
 
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        dados = response.json()
+        // Monta tabela
+        let html = "<table><tr><th>Estado</th><th>Ano</th><th>Valor Produção (R$ mil)</th></tr>";
+        resultados.forEach(item => {
+          const estado = item.localidade?.nome || "Desconhecido";
+          for (const [ano, valor] of Object.entries(item.serie)) {
+            html += `<tr><td>${estado}</td><td>${ano}</td><td>${valor}</td></tr>`;
+          }
+        });
+        html += "</table>";
 
-        if not dados or not isinstance(dados, list):
-            return "Resposta da API veio vazia ou inesperada."
+        document.getElementById("output").innerHTML = html;
+      } catch (err) {
+        document.getElementById("output").innerText = "Erro ao consultar API: " + err;
+      }
+    }
 
-        resultados_api = dados[0].get("resultados",
+    buscarDadosAgroParana();
+  </script>
+</body>
+</html>
