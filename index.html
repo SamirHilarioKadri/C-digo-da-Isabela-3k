@@ -3,49 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>Dados Agro Paraná</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #fafafa; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #eee; }
+    canvas { margin-top: 30px; }
   </style>
 </head>
 <body>
   <h1>Consulta SIDRA/IBGE - Produção Agrícola no Paraná</h1>
   <div id="output">Carregando dados...</div>
-
-  <script>
-    async function buscarDadosAgroParana() {
-      const url = "https://servicodados.ibge.gov.br/api/v3/agregados/1612/periodos/2023/variaveis/214?localidades=N3[41]";
-      try {
-        const response = await fetch(url, {
-          headers: { "User-Agent": "AcessibilidadeAgroApp/1.0 (contato@exemplo.com)" }
-        });
-        const dados = await response.json();
-
-        const resultados = dados[0]?.resultados[0]?.series || [];
-        if (!resultados.length) {
-          document.getElementById("output").innerText = "Nenhum resultado encontrado.";
-          return;
-        }
-
-        // Monta tabela
-        let html = "<table><tr><th>Estado</th><th>Ano</th><th>Valor Produção (R$ mil)</th></tr>";
-        resultados.forEach(item => {
-          const estado = item.localidade?.nome || "Desconhecido";
-          for (const [ano, valor] of Object.entries(item.serie)) {
-            html += `<tr><td>${estado}</td><td>${ano}</td><td>${valor}</td></tr>`;
-          }
-        });
-        html += "</table>";
-
-        document.getElementById("output").innerHTML = html;
-      } catch (err) {
-        document.getElementById("output").innerText = "Erro ao consultar API: " + err;
-      }
-    }
-
-    buscarDadosAgroParana();
-  </script>
-</body>
-</html>
+  <canvas id="grafico">
